@@ -1,0 +1,33 @@
+version: '3.4'
+
+networks:
+    containerappnetwork:  
+
+services:
+  sqlcontainerdb:
+    container_name: docker-container-database
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    ports:
+        - 8002:1433
+    environment:
+        - ACCEPT_EULA=Y
+        - MSSQL_SA_PASSWORD=badfather2024@@
+    networks:
+        - containerappnetwork
+  docker-web-app:
+    image: dochubpanchsan/dockerwebapp:latest
+    build:
+      context: .
+      dockerfile: docker-web-app/Dockerfile
+    ports:
+        - 8001:8080
+    depends_on:
+        - sqlcontainerdb
+    environment:
+        - DB_HOST=sqlcontainerdb
+        - DB_NAME=DockerSQLDatabase
+        - DB_USER_ID=SA
+        - DB_SA_PASSWORD=badfather2024@@
+    networks:
+        - containerappnetwork
+  

@@ -1,0 +1,6 @@
+version: '3.4'
+
+services:
+  docker-web-app:
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
