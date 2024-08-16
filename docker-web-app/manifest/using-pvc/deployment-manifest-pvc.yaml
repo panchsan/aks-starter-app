@@ -1,0 +1,129 @@
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: azurefile-pv
+spec:
+  capacity:
+    storage: 1Gi
+  accessModes:
+    - ReadWriteMany
+  azureFile:
+    secretName: azure-secret
+    shareName: mssql-fileshare
+    readOnly: false
+  persistentVolumeReclaimPolicy: Retain
+
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: azurefile-pvc
+spec:
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 1Gi
+  storageClassName: ""
+  volumeName: azurefile-pv
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: docker-web-app
+  name: docker-web-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: docker-web-app
+  template:
+    metadata:
+      labels:
+        app: docker-web-app
+    spec:
+      containers:
+        - env:
+            - name: DB_HOST
+              value: sqlcontainerdb
+            - name: DB_NAME
+              value: DockerSQLDatabase
+            - name: DB_SA_PASSWORD
+              value: badfather2024@@
+            - name: DB_USER_ID
+              value: SA
+          image: aksdemoreg.azurecr.io/dockerwebapp:latest
+          name: docker-web-app
+          ports:
+            - containerPort: 8080
+              protocol: TCP
+      restartPolicy: Always
+      imagePullSecrets:
+         - name: acr-secret  
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: docker-web-app
+  name: docker-web-app
+spec:
+  ports:
+    - name: "8080"
+      port: 8080
+      targetPort: 8080
+  selector:
+    app: docker-web-app
+  type: LoadBalancer  
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: sqlcontainerdb
+  name: sqlcontainerdb
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: sqlcontainerdb
+  template:
+    metadata:
+      labels:
+        app: sqlcontainerdb
+    spec:
+      containers:
+        - name: docker-container-database
+          image: mcr.microsoft.com/mssql/server:2022-latest
+          env:
+            - name: ACCEPT_EULA
+              value: "Y"
+            - name: MSSQL_SA_PASSWORD
+              value: badfather2024@@
+          ports:
+            - containerPort: 1433
+              protocol: TCP
+          volumeMounts:
+            - name: mssql-data
+              mountPath: /var/opt/mssql  # Default SQL Server data directory
+      volumes:
+        - name: mssql-data
+          persistentVolumeClaim:
+            claimName: azurefile-pvc
+      restartPolicy: Always
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: sqlcontainerdb
+  name: sqlcontainerdb
+spec:
+  ports:
+    - name: "1433"
+      port: 1433
+      targetPort: 1433
+  selector:
+    app: sqlcontainerdb
+  type: ClusterIP
