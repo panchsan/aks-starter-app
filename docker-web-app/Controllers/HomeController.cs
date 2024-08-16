@@ -67,5 +67,10 @@ namespace Docker_compose_web_app.Controllers
 
             return RedirectToAction("Index");
         }
+
+        public IActionResult Privacy()
+        {
+            return View();
+        }
     }
 }
