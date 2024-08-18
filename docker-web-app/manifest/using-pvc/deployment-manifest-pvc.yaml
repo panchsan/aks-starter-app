@@ -46,13 +46,25 @@ spec:
       containers:
         - env:
             - name: DB_HOST
-              value: sqlcontainerdb
+              valueFrom: 
+                configMapKeyRef:
+                  key: DB_HOST
+                  name: docker-app-configmap
             - name: DB_NAME
-              value: DockerSQLDatabase
+              valueFrom: 
+                configMapKeyRef:
+                  key: DB_NAME
+                  name: docker-app-configmap
             - name: DB_SA_PASSWORD
-              value: badfather2024@@
+              valueFrom: 
+                secretKeyRef:
+                  key: DB_SA_PASSWORD
+                  name: docker-app-secret
             - name: DB_USER_ID
-              value: SA
+              valueFrom: 
+                configMapKeyRef:
+                  key: DB_USER_ID
+                  name: docker-app-configmap
           image: aksdemoreg.azurecr.io/dockerwebapp:latest
           name: docker-web-app
           ports:
@@ -100,7 +112,10 @@ spec:
             - name: ACCEPT_EULA
               value: "Y"
             - name: MSSQL_SA_PASSWORD
-              value: badfather2024@@
+              valueFrom: 
+                configMapKeyRef:
+                  key: MSSQL_SA_PASSWORD
+                  name: sqldb-configmap
           ports:
             - containerPort: 1433
               protocol: TCP

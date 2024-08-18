@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: docker-app-configmap
+  namespace: my-aks-namespace
+data:
+  # Configuration values can be stored as plain key-value pairs
+  DB_HOST: "sqlcontainerdb"
+  DB_NAME: "DockerSQLDatabase"
+  DB_SA_PASSWORD: "badfather2024@@"
+  DB_USER_ID: "SA"
