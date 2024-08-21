@@ -60,7 +60,7 @@ jobs:
           
       # Build .NET application 
       - name: dotnet build
-        run: dotnet build -c release   
+        run: dotnet build docker-web-app/docker-web-app.sln -c release   
         
       # Logs in with your Azure credentials
       - name: Azure login
