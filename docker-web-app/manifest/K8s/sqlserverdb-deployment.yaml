@@ -1,0 +1,38 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: sqlcontainerdb
+  name: sqlcontainerdb
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: sqlcontainerdb
+  template:
+    metadata:
+      labels:
+        app: sqlcontainerdb
+    spec:
+      containers:
+        - name: docker-container-database
+          image: mcr.microsoft.com/mssql/server:2022-latest
+          env:
+            - name: ACCEPT_EULA
+              value: "Y"
+            - name: MSSQL_SA_PASSWORD
+              valueFrom: 
+                configMapKeyRef:
+                  key: MSSQL_SA_PASSWORD
+                  name: sqldb-configmap
+          ports:
+            - containerPort: 1433
+              protocol: TCP
+          volumeMounts:
+            - name: mssql-data
+              mountPath: /var/opt/mssql  # Default SQL Server data directory
+      volumes:
+        - name: mssql-data
+          persistentVolumeClaim:
+            claimName: azurefile-pvc
+      restartPolicy: Always
