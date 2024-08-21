@@ -49,7 +49,10 @@ jobs:
     environment: development
     steps:
       # Checks out the repository this file is in
+      
+      - name: Check out repository
       - uses: actions/checkout@v4
+      
       - name: Setup .NET Core SDK
         uses: actions/setup-dotnet@v4.0.1
         with:
