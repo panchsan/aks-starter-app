@@ -1,32 +1,3 @@
-# This workflow will build and push an application to a Azure Kubernetes Service (AKS) cluster when you push your code
-#
-# This workflow assumes you have already created the target AKS cluster and have created an Azure Container Registry (ACR)
-# The ACR should be attached to the AKS cluster
-# For instructions see:
-#   - https://docs.microsoft.com/en-us/azure/aks/kubernetes-walkthrough-portal
-#   - https://docs.microsoft.com/en-us/azure/container-registry/container-registry-get-started-portal
-#   - https://learn.microsoft.com/en-us/azure/aks/cluster-container-registry-integration?tabs=azure-cli#configure-acr-integration-for-existing-aks-clusters
-#   - https://github.com/Azure/aks-create-action
-#
-# To configure this workflow:
-#
-# 1. Set the following secrets in your repository (instructions for getting these can be found at https://docs.microsoft.com/en-us/azure/developer/github/connect-from-azure?tabs=azure-cli%2Clinux):
-#    - AZURE_CLIENT_ID
-#    - AZURE_TENANT_ID
-#    - AZURE_SUBSCRIPTION_ID
-#
-# 2. Set the following environment variables (or replace the values below):
-#    - AZURE_CONTAINER_REGISTRY (name of your container registry / ACR)
-#    - RESOURCE_GROUP (where your cluster is deployed)
-#    - CLUSTER_NAME (name of your AKS cluster)
-#    - CONTAINER_NAME (name of the container image you would like to push up to your ACR)
-#    - IMAGE_PULL_SECRET_NAME (name of the ImagePullSecret that will be created to pull your ACR image)
-#    - DEPLOYMENT_MANIFEST_PATH (path to the manifest yaml for your deployment)
-#
-# For more information on GitHub Actions for Azure, refer to https://github.com/Azure/Actions
-# For more samples to get started with GitHub Action workflows to deploy to Azure, refer to https://github.com/Azure/actions-workflow-samples
-# For more options with the actions used below please refer to https://github.com/Azure/login
-
 name: Build and deploy an app to AKS
 
 on:
@@ -36,11 +7,15 @@ on:
 
 env:
   AZURE_CONTAINER_REGISTRY: "aksdemoreg"
+  AZURE_CONTAINER_REGISTRY_USERNAME: "my-token"
+  AZURE_CONTAINER_REGISTRY_PASSWORD: "e0o80c50P7j/ksj8bfG7yjRoj05QWHSmQK0sh5U+Zw+ACRBVqQAK"
   CONTAINER_NAME: "dockerwebapp"
   RESOURCE_GROUP: "RG-Global-SantanuPanchadhyay-Appteam"
   CLUSTER_NAME: "mydemoAKSCluster"
+  DEPLOYMENT_NAMESPACE: "my-aks-namespace-github-actions"
 
 jobs:
+  # Job 1 : Build and push the image to ACR
   buildImage:
     permissions:
       contents: read
@@ -66,9 +41,80 @@ jobs:
       - name: Azure login
         uses: azure/login@v1.4.6
         with:
-          creds: ${{ secrets.AZURE_CREDENTIALS }}
-
-      # Builds and pushes an image up to your Azure Container Registry
+          creds: ${{ secrets.AZURE_CREDENTIALS }}      
+  
+        # Builds and pushes an image up to your Azure Container Registry
       - name: Build and push image to ACR
         run: |
           az acr build --image ${{ env.AZURE_CONTAINER_REGISTRY }}.azurecr.io/${{ env.CONTAINER_NAME }}:${{ github.sha }} --registry ${{ env.AZURE_CONTAINER_REGISTRY }} -g ${{ env.RESOURCE_GROUP }} .
+
+          
+  deploy:
+        # Job 2 : Deploy the ACR image to AKS
+        permissions:
+          actions: read
+          contents: read
+          id-token: write
+        runs-on: ubuntu-latest
+        needs: [buildImage]
+        steps:
+          # Checks out the repository this file is in
+          - uses: actions/checkout@v4
+    
+          # Logs in with your Azure credentials
+          - name: Azure login
+            uses: azure/login@v1.4.6
+            with:
+              creds: ${{ secrets.AZURE_CREDENTIALS }}
+    
+          # Use kubelogin to configure your kubeconfig for Azure auth
+          - name: Set up kubelogin for non-interactive login
+            uses: azure/use-kubelogin@v1
+            with:
+              kubelogin-version: 'v0.0.25'
+    
+          # Retrieves your Azure Kubernetes Service cluster's kubeconfig file
+          - name: Get K8s context
+            uses: azure/aks-set-context@v3
+            with:
+              resource-group: ${{ env.RESOURCE_GROUP }}
+              cluster-name: ${{ env.CLUSTER_NAME }}
+              admin: 'false'
+              use-kubelogin: 'true'
+          # Create K8s secrets to pull images
+  
+          - name: Create secret in Kubernetes cluster
+            uses: Azure/k8s-create-secret@v4.0
+            with:
+              # Choose the target Kubernetes namespace. If the namespace is not provided, the commands will run in the default namespace.
+              namespace: ${{ env.DEPLOYMENT_NAMESPACE }}
+              # Name of the secret. You can use this secret name in the Kubernetes YAML configuration file.
+              secret-name: acr-secret
+              # Container Registry URL
+              container-registry-url: ${{ env.AZURE_CONTAINER_REGISTRY }}.azurecr.io
+              # Container Registry user name
+              container-registry-username: ${{ env.AZURE_CONTAINER_REGISTRY_USERNAME }}
+              # Container Registry password
+              container-registry-password: ${{ env.AZURE_CONTAINER_REGISTRY_PASSWORD }}
+              # Container Registry email (optional even when using url,username,password)
+              container-registry-email: unused
+          
+          # Deploys application based on given manifest file
+          - name: Deploys application
+            uses: Azure/k8s-deploy@v4
+            with:
+              action: deploy
+              namespace: ${{ env.DEPLOYMENT_NAMESPACE }}
+              manifests: |
+                manifest/k8s/01_apply_azure_blob_pv.yaml
+                manifest/k8s/02_apply_azure_blob_pvc.yaml
+                manifest/k8s/03_apply_azure_secret_blob.yaml
+                manifest/k8s/04_apply_docker_app_configMap.yaml
+                manifest/k8s/05_apply_docker_app_secret.yaml
+                manifest/k8s/06_apply_docker_app_deployment.yaml
+                manifest/k8s/07_apply_docker_app_service.yaml
+                manifest/k8s/08_apply_sqlserverdb_configMap.yaml
+                manifest/k8s/09_apply_sqlserverdb_deployment.yaml
+                manifest/k8s/10_apply_sqlserverdb-service.yaml
+              images: |
+                ${{ env.AZURE_CONTAINER_REGISTRY }}.azurecr.io/${{ env.CONTAINER_NAME }}:${{ github.sha }}    
