@@ -80,15 +80,15 @@ jobs:
           action: deploy
           namespace: ${{ env.DEPLOYMENT_NAMESPACE }}
           manifests: |
-            manifest/k8s/01_apply_azure_blob_pv.yaml
-            manifest/k8s/02_apply_azure_blob_pvc.yaml
-            manifest/k8s/03_apply_azure_secret_blob.yaml
-            manifest/k8s/04_apply_docker_app_configMap.yaml
-            manifest/k8s/05_apply_docker_app_secret.yaml
-            manifest/k8s/06_apply_docker_app_deployment.yaml
-            manifest/k8s/07_apply_docker_app_service.yaml
-            manifest/k8s/08_apply_sqlserverdb_configMap.yaml
-            manifest/k8s/09_apply_sqlserverdb_deployment.yaml
-            manifest/k8s/10_apply_sqlserverdb-service.yaml
+            docker-web-app/manifest/k8s/01_apply_azure_blob_pv.yaml
+            docker-web-app/manifest/k8s/02_apply_azure_blob_pvc.yaml
+            docker-web-app/manifest/k8s/03_apply_azure_secret_blob.yaml
+            docker-web-app/manifest/k8s/04_apply_docker_app_configMap.yaml
+            docker-web-app/manifest/k8s/05_apply_docker_app_secret.yaml
+            docker-web-app/manifest/k8s/06_apply_docker_app_deployment.yaml
+            docker-web-app/manifest/k8s/07_apply_docker_app_service.yaml
+            docker-web-app/manifest/k8s/08_apply_sqlserverdb_configMap.yaml
+            docker-web-app/manifest/k8s/09_apply_sqlserverdb_deployment.yaml
+            docker-web-app/manifest/k8s/10_apply_sqlserverdb-service.yaml
           images: |
             ${{ env.AZURE_CONTAINER_REGISTRY }}.azurecr.io/${{ env.CONTAINER_NAME }}:${{ github.sha }}    
