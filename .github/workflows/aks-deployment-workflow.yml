@@ -16,7 +16,7 @@ env:
 
 jobs:
   # Job 1 : Build and push the image to ACR
-  buildImageanddeploy2aks:
+  DeploytoAKS:
     permissions:
       contents: read
       id-token: write
