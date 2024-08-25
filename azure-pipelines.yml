@@ -29,8 +29,8 @@ stages:
         action: 'Build services'
 
     - script: |
-        docker tag $(acrName).azurecr.io/$(imageName) $(acrName).azurecr.io/$(imageName):$(tag)
-      displayName: 'Tag Docker images'
+        docker tag $(acrName).azurecr.io/$(imageName):latest $(acrName).azurecr.io/$(imageName):$(tag)
+      displayName: 'Tag Docker images with Build ID'   
 
     - task: DockerCompose@1
       displayName: 'Push services'
@@ -41,3 +41,20 @@ stages:
         azureContainerRegistry: '{"loginServer":"$(acrName).azurecr.io", "id" : "/subscriptions/edf6dd9d-7c4a-4bca-a997-945f3d60cf4e/resourceGroups/RG-Global-SantanuPanchadhyay-Appteam/providers/Microsoft.ContainerRegistry/registries/$(acrName)"}'
         dockerComposeFile: '**/docker-compose.yml'
         action: 'Push services'
+        additionalImageTags: $(tag)
+
+- stage: Deploy
+  jobs:
+  - job: DeployToAKS
+    steps:
+    
+    - task: KubernetesManifest@1
+      inputs:
+        action: 'deploy'
+        connectionType: 'azureResourceManager'
+        azureSubscriptionConnection: 'sc-demo-pipelines-linux-app'
+        azureResourceGroup: 'RG-Global-SantanuPanchadhyay-Appteam'
+        kubernetesCluster: 'mydemoAKSCluster'
+        namespace: 'my-aks-namespace-ado'
+        manifests: 'docker-web-app/manifest/K8s/*'
+        imagePullSecrets: 'acr-secret'
