@@ -28,6 +28,10 @@ stages:
         dockerComposeFile: '**/docker-compose.yml'
         action: 'Build services'
 
+    - script: |
+        docker tag $(acrName).azurecr.io/$(imageName):latest $(acrName).azurecr.io/$(imageName):$(tag)
+      displayName: 'Tag Docker images with Build ID'   
+
     - task: DockerCompose@1
       displayName: 'Push services'
       inputs:
@@ -37,4 +41,4 @@ stages:
         azureContainerRegistry: '{"loginServer":"$(acrName).azurecr.io", "id" : "/subscriptions/edf6dd9d-7c4a-4bca-a997-945f3d60cf4e/resourceGroups/RG-Global-SantanuPanchadhyay-Appteam/providers/Microsoft.ContainerRegistry/registries/$(acrName)"}'
         dockerComposeFile: '**/docker-compose.yml'
         action: 'Push services'
-        includeLatestTag: false
+        additionalImageTags: $(tag)
