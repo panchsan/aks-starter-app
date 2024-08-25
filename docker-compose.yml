@@ -18,7 +18,7 @@ services:
     image: dochubpanchsan/dockerwebapp:latest
     build:
       context: .
-      dockerfile: docker-web-app/Dockerfile
+      dockerfile: Dockerfile
     ports:
         - 8001:8080
     depends_on:
