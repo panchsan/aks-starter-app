@@ -42,3 +42,19 @@ stages:
         dockerComposeFile: '**/docker-compose.yml'
         action: 'Push services'
         additionalImageTags: $(tag)
+
+- stage: Deploy
+  jobs:
+  - job: DeployToAKS
+    steps:
+    
+    - task: KubernetesManifest@1
+      inputs:
+        action: 'deploy'
+        connectionType: 'azureResourceManager'
+        azureSubscriptionConnection: 'sc-demo-pipelines-linux-app'
+        azureResourceGroup: 'RG-Global-SantanuPanchadhyay-Appteam'
+        kubernetesCluster: 'mydemoAKSCluster'
+        namespace: 'my-aks-namespace-ado'
+        manifests: 'docker-web-app/manifest/K8s/*'
+        imagePullSecrets: 'acr-secret'
