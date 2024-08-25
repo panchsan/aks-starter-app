@@ -15,7 +15,7 @@ services:
     networks:
         - containerappnetwork
   docker-web-app:
-    image: dockerwebapp:latest
+    image: dockerwebapp
     build:
       context: .
       dockerfile: Dockerfile
