@@ -1,0 +1,39 @@
+trigger:
+  branches:
+    include:
+      - main
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+variables:
+  imageName: 'your-app-name'
+  acrName: 'youracrname'
+  tag: '$(Build.BuildId)'
+
+stages:
+- stage: Build
+  jobs:
+  - job: BuildAndPush
+    steps:
+    - checkout: self
+        
+    - task: DockerCompose@1
+      inputs:
+        containerregistrytype: 'Azure Container Registry'
+        azureSubscription: 'sc-demo-pipelines-linux-app'
+        projectName: '$(imageName)'
+        azureContainerRegistry: '{"loginServer":"aksdemoreg.azurecr.io", "id" : "/subscriptions/edf6dd9d-7c4a-4bca-a997-945f3d60cf4e/resourceGroups/RG-Global-SantanuPanchadhyay-Appteam/providers/Microsoft.ContainerRegistry/registries/aksdemoreg"}'
+        dockerComposeFile: '**/docker-compose.yml'
+        arguments: '--build-arg BUILD_ID=$(tag)'
+        action: 'Build services'
+
+    - task: DockerCompose@1
+      inputs:
+        containerregistrytype: 'Azure Container Registry'
+        azureSubscription: 'sc-demo-pipelines-linux-app'
+        projectName: '$(imageName)'
+        azureContainerRegistry: '{"loginServer":"aksdemoreg.azurecr.io", "id" : "/subscriptions/edf6dd9d-7c4a-4bca-a997-945f3d60cf4e/resourceGroups/RG-Global-SantanuPanchadhyay-Appteam/providers/Microsoft.ContainerRegistry/registries/aksdemoreg"}'
+        dockerComposeFile: '**/docker-compose.yml'
+        action: 'Push services'
+        includeSourceTags: true
