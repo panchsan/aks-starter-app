@@ -15,7 +15,7 @@ services:
     networks:
         - containerappnetwork
   docker-web-app:
-    image: dochubpanchsan/dockerwebapp:latest
+    image: dockerwebapp:latest
     build:
       context: .
       dockerfile: Dockerfile
