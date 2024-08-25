@@ -2,7 +2,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: sqldb-configmap
-  namespace: my-aks-namespace-github-actions
+  namespace: my-aks-namespace-ado
 data:
   # Configuration values can be stored as plain key-value pairs
   MSSQL_SA_PASSWORD: "badfather2024@@"
