@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Values.webAppconfigMap.name }}
+  namespace: {{ .Values.namespace }}
+data:
+  # Configuration values can be stored as plain key-value pairs
+  DB_HOST: "{{ .Values.webAppconfigMap.dbHost }}"
+  DB_NAME: "{{ .Values.webAppconfigMap.dbName }}"
+  DB_SA_PASSWORD: "{{ .Values.webAppconfigMap.dbSaPassword }}"
+  DB_USER_ID: "{{ .Values.webAppconfigMap.dbUserId }}"

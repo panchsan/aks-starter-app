@@ -1,0 +1,38 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: {{ .Values.sqlApp.name }}
+  name: {{ .Values.sqlApp.name }}
+spec:
+  replicas: {{ .Values.sqlApp.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ .Values.sqlApp.name }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.sqlApp.name }}
+    spec:
+      containers:
+        - name: {{ .Values.sqlApp.containerName }}
+          image: "{{ .Values.sqlApp.image.repository }}:{{ .Values.sqlApp.image.tag }}"
+          env:
+            - name: ACCEPT_EULA
+              value: "Y"
+            - name: MSSQL_SA_PASSWORD
+              valueFrom: 
+                configMapKeyRef:
+                  key: MSSQL_SA_PASSWORD
+                  name: {{ .Values.sqlApp.configMapName }}
+          ports:
+            - containerPort: {{ .Values.sqlApp.containerPort }}
+              protocol: TCP
+          volumeMounts:
+            - name: mssql-data
+              mountPath: /var/opt/mssql  # Default SQL Server data directory
+      volumes:
+        - name: mssql-data
+          persistentVolumeClaim:
+            claimName: {{ .Values.sqlApp.pvcName }}
+      restartPolicy: Always

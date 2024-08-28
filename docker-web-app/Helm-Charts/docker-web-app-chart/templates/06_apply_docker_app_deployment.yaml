@@ -1,0 +1,46 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: {{ .Values.webApp.name }}
+  name: {{ .Values.webApp.name }}
+spec:
+  replicas: {{ .Values.webApp.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ .Values.webApp.name }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.webApp.name }}
+    spec:
+      containers:
+        - env:
+            - name: DB_HOST
+              valueFrom: 
+                configMapKeyRef:
+                  key: DB_HOST
+                  name: {{ .Values.webApp.configMapName }}
+            - name: DB_NAME
+              valueFrom: 
+                configMapKeyRef:
+                  key: DB_NAME
+                  name: {{ .Values.webApp.configMapName }}
+            - name: DB_SA_PASSWORD
+              valueFrom: 
+                secretKeyRef:
+                  key: DB_SA_PASSWORD
+                  name: {{ .Values.webApp.secretName }}
+            - name: DB_USER_ID
+              valueFrom: 
+                configMapKeyRef:
+                  key: DB_USER_ID
+                  name: {{ .Values.webApp.configMapName }}
+          image: "{{ .Values.webApp.image.repository }}:{{ .Values.webApp.image.tag }}"
+          name: {{ .Values.webApp.name }}
+          ports:
+            - containerPort: {{ .Values.webApp.containerPort }}
+              protocol: TCP
+      restartPolicy: Always
+      imagePullSecrets:
+         - name: {{ .Values.webApp.imagePullSecret }}

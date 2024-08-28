@@ -1,0 +1,62 @@
+namespace: my-aks-namespace-helm-charts
+
+webApp:
+  name: docker-web-app
+  replicaCount: 1
+  image:
+    repository: aksdemoreg.azurecr.io/dockerwebapp
+    tag: latest
+  containerPort: 8080
+  servicePort: 8080
+  targetPort: 8080
+  serviceType: LoadBalancer
+  configMapName: docker-app-configmap
+  secretName: docker-app-secret
+  imagePullSecret: acr-secret
+
+sqlApp:
+  name: sqlcontainerdb
+  replicaCount: 1
+  containerName: docker-container-database
+  image:
+    repository: mcr.microsoft.com/mssql/server
+    tag: 2022-latest
+  containerPort: 1433
+  servicePort: 1433
+  targetPort: 1433
+  serviceType: ClusterIP
+  configMapName: sqldb-configmap
+  pvcName: azurefile-pvc
+
+pv:
+  name: azurefile-pv
+  storage: 1Gi
+  accessModes: ReadWriteMany
+  secretName: azure-secret
+  shareName: mssql-fileshare
+  reclaimPolicy: Retain
+
+pvc:
+  name: azurefile-pvc
+  accessModes: ReadWriteMany
+  storage: 1Gi
+
+webAppconfigMap:
+  name: docker-app-configmap
+  dbHost: sqlcontainerdb
+  dbName: DockerSQLDatabase
+  dbSaPassword: badfather2024@@
+  dbUserId: SA
+
+sqlAppconfigMap:
+  name: sqldb-configmap
+  dbRootPassword: badfather2024@@
+
+secret:
+  name: docker-app-secret
+  dbSaPassword: badfather2024@@  # Plaintext password for Helm template
+
+azureSecret:
+  name: azure-secret
+  azureStorageAccountName: sqlpvcstorage  # Plaintext storage account name
+  azureStorageAccountKey: Ybiv/BkAMfNFdA+MzH3dJ0mU8B4cO4Ef3g9MZe4O09OxTkA6CJ5C8A==  # Plaintext storage account key
